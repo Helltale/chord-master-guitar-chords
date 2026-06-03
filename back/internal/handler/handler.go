@@ -275,6 +275,19 @@ func (srv *server) UpdateSong(
 	}, nil
 }
 
+func (srv *server) DeleteSong(
+	ctx context.Context,
+	request gen.DeleteSongRequestObject,
+) (gen.DeleteSongResponseObject, error) {
+	if err := srv.songCases.Delete(ctx, request.SongId); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return gen.DeleteSong404Response{}, nil
+		}
+		return nil, err
+	}
+	return gen.DeleteSong204Response{}, nil
+}
+
 func (srv *server) TransposeSong(
 	ctx context.Context,
 	request gen.TransposeSongRequestObject,

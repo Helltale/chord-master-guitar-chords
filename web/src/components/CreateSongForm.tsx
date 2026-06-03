@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react'
-import type { CreateSongRequest, TabContent } from '@/api/schemas'
+import type { CreateSongRequest, TabContent, UpdateSongRequest } from '@/api/schemas'
 import type { Artist } from '@/api/schemas'
 import { useTranslation } from '@/contexts/I18nContext'
+import { formatTabContentAsLyrics } from '@/utils/formatTabContentAsLyrics'
 import { parseLyricsWithChords } from '@/utils/parseLyricsWithChords'
 import { slugFromString } from '@/utils/slug'
 
+export type SongFormInitial = {
+  artistId: string
+  title: string
+  tonality?: number
+  content?: TabContent
+}
+
 interface CreateSongFormProps {
+  mode?: 'create' | 'edit'
+  initial?: SongFormInitial
   artists: Artist[]
   artistsLoading: boolean
-  onSubmit: (body: CreateSongRequest) => void
+  onSubmit: (body: CreateSongRequest | UpdateSongRequest) => void
   loading: boolean
   error: Error | null
   defaultArtistId?: string
@@ -22,7 +32,14 @@ interface CreateSongFormProps {
 
 const CHORD_PRESETS = ['G', 'C', 'D', 'Em', 'Am', 'F', 'Bm'] as const
 
+function buildLyricsInitial(content?: TabContent): string {
+  if (!content?.sections?.length) return ''
+  return formatTabContentAsLyrics(content)
+}
+
 export function CreateSongForm({
+  mode = 'create',
+  initial,
   artists,
   artistsLoading,
   onSubmit,
@@ -32,24 +49,36 @@ export function CreateSongForm({
   onPreviewChange,
 }: CreateSongFormProps) {
   const { t } = useTranslation()
+  const isEdit = mode === 'edit'
   const [artistSearch, setArtistSearch] = useState('')
-  const [selectedArtistId, setSelectedArtistId] = useState<string>('')
-  const [lyricsText, setLyricsText] = useState('')
-  const [title, setTitle] = useState('')
-  const [tonalityRaw, setTonalityRaw] = useState('')
+  const [selectedArtistId, setSelectedArtistId] = useState(initial?.artistId ?? '')
+  const [lyricsText, setLyricsText] = useState(() => buildLyricsInitial(initial?.content))
+  const [title, setTitle] = useState(initial?.title ?? '')
+  const [tonalityRaw, setTonalityRaw] = useState(
+    initial?.tonality != null ? String(initial.tonality) : ''
+  )
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const trimmedTitle = title.trim()
     const slug = slugFromString(trimmedTitle)
-    if (!selectedArtistId || !trimmedTitle || !slug) return
+    if (!trimmedTitle || !slug) return
     const tonality = tonalityRaw ? parseInt(tonalityRaw, 10) : undefined
     const contentToSend = lyricsText.trim() ? parseLyricsWithChords(lyricsText) : undefined
-    onSubmit({ artist_id: selectedArtistId, title: trimmedTitle, slug, tonality, content: contentToSend })
-  }
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value)
+    if (isEdit) {
+      onSubmit({ title: trimmedTitle, slug, tonality, content: contentToSend })
+      return
+    }
+
+    if (!selectedArtistId) return
+    onSubmit({
+      artist_id: selectedArtistId,
+      title: trimmedTitle,
+      slug,
+      tonality,
+      content: contentToSend,
+    })
   }
 
   const filteredArtists = artists.filter((a) =>
@@ -58,12 +87,22 @@ export function CreateSongForm({
   const visibleArtists = filteredArtists.slice(0, 8)
 
   useEffect(() => {
-    if (!defaultArtistId || selectedArtistId) return
+    if (isEdit || !defaultArtistId || selectedArtistId) return
     const a = artists.find((artist) => artist.artist_id === defaultArtistId)
     if (!a) return
     setSelectedArtistId(defaultArtistId)
     setArtistSearch(a.name)
-  }, [defaultArtistId, artists, selectedArtistId])
+  }, [defaultArtistId, artists, selectedArtistId, isEdit])
+
+  useEffect(() => {
+    if (!isEdit || !initial) return
+    setTitle(initial.title)
+    setTonalityRaw(initial.tonality != null ? String(initial.tonality) : '')
+    setLyricsText(buildLyricsInitial(initial.content))
+    setSelectedArtistId(initial.artistId)
+    const artist = artists.find((a) => a.artist_id === initial.artistId)
+    if (artist) setArtistSearch(artist.name)
+  }, [isEdit, initial, artists])
 
   useEffect(() => {
     if (!onPreviewChange) return
@@ -77,12 +116,12 @@ export function CreateSongForm({
     const content: TabContent | null = hasContent ? parseLyricsWithChords(lyricsText) : null
     const tonality = tonalityRaw ? parseInt(tonalityRaw, 10) : undefined
     onPreviewChange({
-      title: trimmedTitle || 'Untitled song',
+      title: trimmedTitle || initial?.title || 'Untitled song',
       artistName: artist?.name ?? '',
       tonality,
       content,
     })
-  }, [artists, selectedArtistId, title, lyricsText, tonalityRaw, onPreviewChange])
+  }, [artists, selectedArtistId, title, lyricsText, tonalityRaw, onPreviewChange, initial?.title])
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -101,7 +140,7 @@ export function CreateSongForm({
           type="search"
           value={artistSearch}
           onChange={(e) => setArtistSearch(e.target.value)}
-          disabled={artistsLoading}
+          disabled={artistsLoading || isEdit}
           placeholder={t('search.placeholder')}
           className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none ring-1 ring-slate-200/80 focus:border-indigo-400 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-50 dark:shadow-black/30 dark:ring-slate-900/60"
         />
@@ -117,8 +156,9 @@ export function CreateSongForm({
               <button
                 key={a.artist_id}
                 type="button"
+                disabled={isEdit}
                 onClick={() => setSelectedArtistId(a.artist_id)}
-                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs ${
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs disabled:cursor-default ${
                   selectedArtistId === a.artist_id
                     ? 'bg-indigo-500/20 text-indigo-800 ring-1 ring-indigo-400 dark:text-indigo-100'
                     : 'bg-transparent text-slate-700 hover:bg-slate-200/80 dark:text-slate-200 dark:hover:bg-slate-900'
@@ -148,8 +188,8 @@ export function CreateSongForm({
           name="title"
           type="text"
           required
-          onChange={handleTitleChange}
           value={title}
+          onChange={(e) => setTitle(e.target.value)}
           className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none ring-1 ring-slate-200/80 focus:border-indigo-400 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-50 dark:shadow-black/30 dark:ring-slate-900/60"
         />
       </div>
@@ -213,7 +253,13 @@ export function CreateSongForm({
         disabled={loading || artistsLoading}
         className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_40px_rgba(79,70,229,0.6)] transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? t('createSong.submitting') : t('createSong.submit')}
+        {loading
+          ? isEdit
+            ? t('editSong.submitting')
+            : t('createSong.submitting')
+          : isEdit
+            ? t('editSong.submit')
+            : t('createSong.submit')}
       </button>
     </form>
   )

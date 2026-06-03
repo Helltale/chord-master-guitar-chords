@@ -35,6 +35,9 @@ type ServerInterface interface {
 	// Create song
 	// (POST /songs)
 	CreateSong(w http.ResponseWriter, r *http.Request)
+	// Delete song
+	// (DELETE /songs/{songId})
+	DeleteSong(w http.ResponseWriter, r *http.Request, songId openapi_types.UUID)
 	// Get song by ID
 	// (GET /songs/{songId})
 	GetSong(w http.ResponseWriter, r *http.Request, songId openapi_types.UUID)
@@ -83,6 +86,12 @@ func (_ Unimplemented) ListSongs(w http.ResponseWriter, r *http.Request, params 
 // Create song
 // (POST /songs)
 func (_ Unimplemented) CreateSong(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete song
+// (DELETE /songs/{songId})
+func (_ Unimplemented) DeleteSong(w http.ResponseWriter, r *http.Request, songId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -293,6 +302,31 @@ func (siw *ServerInterfaceWrapper) CreateSong(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateSong(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSong operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSong(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "songId" -------------
+	var songId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "songId", chi.URLParam(r, "songId"), &songId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "songId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSong(w, r, songId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -527,6 +561,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/songs", wrapper.CreateSong)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/songs/{songId}", wrapper.DeleteSong)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/songs/{songId}", wrapper.GetSong)
 	})
 	r.Group(func(r chi.Router) {
@@ -665,6 +702,30 @@ func (response CreateSong400Response) VisitCreateSongResponse(w http.ResponseWri
 	return nil
 }
 
+type DeleteSongRequestObject struct {
+	SongId openapi_types.UUID `json:"songId"`
+}
+
+type DeleteSongResponseObject interface {
+	VisitDeleteSongResponse(w http.ResponseWriter) error
+}
+
+type DeleteSong204Response struct {
+}
+
+func (response DeleteSong204Response) VisitDeleteSongResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteSong404Response struct {
+}
+
+func (response DeleteSong404Response) VisitDeleteSongResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 type GetSongRequestObject struct {
 	SongId openapi_types.UUID `json:"songId"`
 }
@@ -770,6 +831,9 @@ type StrictServerInterface interface {
 	// Create song
 	// (POST /songs)
 	CreateSong(ctx context.Context, request CreateSongRequestObject) (CreateSongResponseObject, error)
+	// Delete song
+	// (DELETE /songs/{songId})
+	DeleteSong(ctx context.Context, request DeleteSongRequestObject) (DeleteSongResponseObject, error)
 	// Get song by ID
 	// (GET /songs/{songId})
 	GetSong(ctx context.Context, request GetSongRequestObject) (GetSongResponseObject, error)
@@ -969,6 +1033,32 @@ func (sh *strictHandler) CreateSong(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateSongResponseObject); ok {
 		if err := validResponse.VisitCreateSongResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteSong operation middleware
+func (sh *strictHandler) DeleteSong(w http.ResponseWriter, r *http.Request, songId openapi_types.UUID) {
+	var request DeleteSongRequestObject
+
+	request.SongId = songId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteSong(ctx, request.(DeleteSongRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteSong")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteSongResponseObject); ok {
+		if err := validResponse.VisitDeleteSongResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -50,6 +50,20 @@ export const en: LocaleDict = {
   'songs.tableArtist': 'Artist',
   'songs.tableSlug': 'Slug',
   'songs.listFooter': 'Showing {shown} of {total} songs',
+  'songs.rowActions': 'Song actions',
+  'songs.edit': 'Edit',
+  'songs.delete': 'Delete',
+  'songs.deleteConfirmTitle': 'Delete song?',
+  'songs.deleteConfirmMessage': '“{title}” will be permanently deleted.',
+  'songs.deleteConfirm': 'Delete',
+  'songs.deleteCancel': 'Cancel',
+
+  'editSong.title': 'Edit song',
+  'editSong.subtitle':
+    'Change title, key and lyrics with chords. The artist cannot be changed.',
+  'editSong.submit': 'Save',
+  'editSong.submitting': 'Saving...',
+  'editSong.notFound': 'Song not found',
 
   'favorites.pageSubtitle':
     'Only artists and songs you follow appear here. Use Follow on an artist page or the star on a song.',

@@ -345,6 +345,55 @@ func TestSongs_UpdateSuccess(t *testing.T) {
 	}
 }
 
+func TestSongs_DeleteSuccess(t *testing.T) {
+	server := NewTestServer(t)
+	defer server.Close()
+	base := server.URL + apiBase
+	client := server.Client()
+
+	artistID := createArtistAndGetID(t, base, client, "Del Artist", "del-artist")
+	createBody := `{"artist_id":"` + artistID + `","title":"To Delete","slug":"to-delete"}`
+	cr, _ := client.Post(base+"/songs", "application/json", strings.NewReader(createBody))
+	var created struct {
+		SongId string `json:"song_id"`
+	}
+	json.NewDecoder(cr.Body).Decode(&created)
+	cr.Body.Close()
+
+	req, _ := http.NewRequest(http.MethodDelete, base+"/songs/"+created.SongId, nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		t.Errorf("DELETE: status = %d, want 204", resp.StatusCode)
+	}
+
+	getResp, _ := client.Get(base + "/songs/" + created.SongId)
+	defer getResp.Body.Close()
+	if getResp.StatusCode != http.StatusNotFound {
+		t.Errorf("GET after delete: status = %d, want 404", getResp.StatusCode)
+	}
+}
+
+func TestSongs_Delete_NotFound_Returns404(t *testing.T) {
+	server := NewTestServer(t)
+	defer server.Close()
+	base := server.URL + apiBase
+	client := server.Client()
+
+	req, _ := http.NewRequest(http.MethodDelete, base+"/songs/11111111-1111-1111-1111-111111111111", nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("DELETE non-existent: status = %d, want 404", resp.StatusCode)
+	}
+}
+
 func TestSongs_Update_NotFound_Returns404(t *testing.T) {
 	server := NewTestServer(t)
 	defer server.Close()

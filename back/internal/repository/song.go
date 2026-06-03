@@ -25,6 +25,7 @@ type SongRepository interface {
 	Search(ctx context.Context, query string, limit, offset int) ([]*entity.Song, int64, error)
 	Create(ctx context.Context, s *entity.Song) error
 	Update(ctx context.Context, s *entity.Song) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type songRepo struct {
@@ -230,4 +231,15 @@ func (r *songRepo) Create(ctx context.Context, s *entity.Song) error {
 
 func (r *songRepo) Update(ctx context.Context, s *entity.Song) error {
 	return r.db.WithContext(ctx).Save(s).Error
+}
+
+func (r *songRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	res := r.db.WithContext(ctx).Delete(&entity.Song{}, id)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

@@ -52,6 +52,20 @@ export const ru: LocaleDict = {
   'songs.tableArtist': 'Исполнитель',
   'songs.tableSlug': 'Слаг',
   'songs.listFooter': 'Показано {shown} из {total} песен',
+  'songs.rowActions': 'Действия с песней',
+  'songs.edit': 'Редактировать',
+  'songs.delete': 'Удалить',
+  'songs.deleteConfirmTitle': 'Удалить песню?',
+  'songs.deleteConfirmMessage': 'Песня «{title}» будет удалена без возможности восстановления.',
+  'songs.deleteConfirm': 'Удалить',
+  'songs.deleteCancel': 'Отмена',
+
+  'editSong.title': 'Редактировать песню',
+  'editSong.subtitle':
+    'Измените название, тональность и текст с аккордами. Исполнителя сменить нельзя.',
+  'editSong.submit': 'Сохранить',
+  'editSong.submitting': 'Сохранение...',
+  'editSong.notFound': 'Песня не найдена',
 
   'favorites.pageSubtitle':
     'Здесь только те артисты и песни, на которые вы подписались или поставили звезду.',
