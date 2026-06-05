@@ -10,5 +10,13 @@ func NewMigrations() []*DBMigration {
 			ID:      "20250325000000",
 			Migrate: Migration20250325000000,
 		},
+		{
+			ID:      "20250606000000",
+			Migrate: Migration20250606000000,
+		},
+		{
+			ID:      "20250606000001",
+			Migrate: Migration20250606000001,
+		},
 	}
 }

@@ -4,6 +4,7 @@ import type { Artist } from '@/api/schemas'
 import { useTranslation } from '@/contexts/I18nContext'
 import { formatTabContentAsLyrics } from '@/utils/formatTabContentAsLyrics'
 import { parseLyricsWithChords } from '@/utils/parseLyricsWithChords'
+import { useChords } from '@/hooks/useChords'
 import { slugFromString } from '@/utils/slug'
 
 export type SongFormInitial = {
@@ -30,8 +31,6 @@ interface CreateSongFormProps {
   } | null) => void
 }
 
-const CHORD_PRESETS = ['G', 'C', 'D', 'Em', 'Am', 'F', 'Bm'] as const
-
 function buildLyricsInitial(content?: TabContent): string {
   if (!content?.sections?.length) return ''
   return formatTabContentAsLyrics(content)
@@ -49,6 +48,7 @@ export function CreateSongForm({
   onPreviewChange,
 }: CreateSongFormProps) {
   const { t } = useTranslation()
+  const { presets: chordPresets } = useChords()
   const isEdit = mode === 'edit'
   const [artistSearch, setArtistSearch] = useState('')
   const [selectedArtistId, setSelectedArtistId] = useState(initial?.artistId ?? '')
@@ -319,15 +319,15 @@ export function CreateSongForm({
             </span>
           </div>
           <div ref={bindChordButtonsRef} className="flex flex-wrap gap-2">
-            {CHORD_PRESETS.map((chord) => (
+            {chordPresets.map((chord) => (
               <button
-                key={chord}
+                key={chord.name}
                 type="button"
-                data-chord={chord}
+                data-chord={chord.name}
                 tabIndex={-1}
                 className="flex h-8 min-w-[2.5rem] items-center justify-center rounded-full border border-indigo-500/40 bg-indigo-500/10 px-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-500 hover:text-white dark:text-indigo-200"
               >
-                {chord}
+                {chord.name}
               </button>
             ))}
           </div>

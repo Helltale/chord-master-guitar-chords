@@ -1,4 +1,5 @@
-import type { TabContent } from '@/api/schemas'
+import type { ChordDefinition, TabContent } from '@/api/schemas'
+import { resolveChordTabs } from '@/utils/resolveChordTabs'
 
 export function isContentEmpty(content: TabContent): boolean {
   const sections = content.sections ?? []
@@ -15,6 +16,9 @@ export function isContentEmpty(content: TabContent): boolean {
   return !seg.chord && !(seg.text ?? '').trim()
 }
 
-export function buildChordTabsFromContent(content: TabContent): Record<string, string> {
-  return content.chord_tabs ?? {}
+export function buildChordTabsFromContent(
+  content: TabContent,
+  catalog: ChordDefinition[] = [],
+): Record<string, string> {
+  return resolveChordTabs(content, catalog)
 }

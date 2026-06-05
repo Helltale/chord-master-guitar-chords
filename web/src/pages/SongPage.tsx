@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { useSong, useTransposeSong } from '@/hooks'
+import { useChords, useSong, useTransposeSong } from '@/hooks'
 import { useTranslation } from '@/contexts/I18nContext'
 import { useFollows } from '@/contexts/follows'
 import { SongContent } from '@/components/SongContent'
@@ -13,6 +13,7 @@ export function SongPage() {
   const { songId } = useParams<{ songId: string }>()
   const { t } = useTranslation()
   const { song: fetchedSong, loading, error } = useSong(songId)
+  const { chords } = useChords()
   const { transpose, loading: transposeLoading } = useTransposeSong(songId)
   const { isSongFollowed, toggleSongFollow } = useFollows()
   const [song, setSong] = useState<Song | null>(null)
@@ -54,7 +55,7 @@ export function SongPage() {
   }
 
   const content = song.content
-  const chordTabs = content ? buildChordTabsFromContent(content) : {}
+  const chordTabs = content ? buildChordTabsFromContent(content, chords) : {}
   const songFollowed = isSongFollowed(song.song_id)
   const handleToggleFavorite = () =>
     toggleSongFollow({
@@ -119,7 +120,7 @@ export function SongPage() {
               loading={transposeLoading}
             />
           </div>
-          <ChordFingeringPanel chordTabs={chordTabs} />
+          <ChordFingeringPanel chordTabs={chordTabs} catalog={chords} />
         </aside>
 
         {/* Main scrollable lyrics/chords area */}

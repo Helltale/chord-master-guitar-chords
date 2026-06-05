@@ -26,6 +26,9 @@ type ServerInterface interface {
 	// Get artist by slug
 	// (GET /artists/{artistSlug})
 	GetArtistBySlug(w http.ResponseWriter, r *http.Request, artistSlug string)
+	// List guitar chord catalog
+	// (GET /chords)
+	ListChords(w http.ResponseWriter, r *http.Request)
 	// Search artists and songs by name/slug or song title
 	// (GET /search)
 	Search(w http.ResponseWriter, r *http.Request, params SearchParams)
@@ -68,6 +71,12 @@ func (_ Unimplemented) CreateArtist(w http.ResponseWriter, r *http.Request) {
 // Get artist by slug
 // (GET /artists/{artistSlug})
 func (_ Unimplemented) GetArtistBySlug(w http.ResponseWriter, r *http.Request, artistSlug string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List guitar chord catalog
+// (GET /chords)
+func (_ Unimplemented) ListChords(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -187,6 +196,20 @@ func (siw *ServerInterfaceWrapper) GetArtistBySlug(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetArtistBySlug(w, r, artistSlug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListChords operation middleware
+func (siw *ServerInterfaceWrapper) ListChords(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListChords(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -552,6 +575,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/artists/{artistSlug}", wrapper.GetArtistBySlug)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/chords", wrapper.ListChords)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/search", wrapper.Search)
 	})
 	r.Group(func(r chi.Router) {
@@ -641,6 +667,22 @@ type GetArtistBySlug404Response struct {
 func (response GetArtistBySlug404Response) VisitGetArtistBySlugResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
 	return nil
+}
+
+type ListChordsRequestObject struct {
+}
+
+type ListChordsResponseObject interface {
+	VisitListChordsResponse(w http.ResponseWriter) error
+}
+
+type ListChords200JSONResponse ChordList
+
+func (response ListChords200JSONResponse) VisitListChordsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type SearchRequestObject struct {
@@ -822,6 +864,9 @@ type StrictServerInterface interface {
 	// Get artist by slug
 	// (GET /artists/{artistSlug})
 	GetArtistBySlug(ctx context.Context, request GetArtistBySlugRequestObject) (GetArtistBySlugResponseObject, error)
+	// List guitar chord catalog
+	// (GET /chords)
+	ListChords(ctx context.Context, request ListChordsRequestObject) (ListChordsResponseObject, error)
 	// Search artists and songs by name/slug or song title
 	// (GET /search)
 	Search(ctx context.Context, request SearchRequestObject) (SearchResponseObject, error)
@@ -950,6 +995,30 @@ func (sh *strictHandler) GetArtistBySlug(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetArtistBySlugResponseObject); ok {
 		if err := validResponse.VisitGetArtistBySlugResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListChords operation middleware
+func (sh *strictHandler) ListChords(w http.ResponseWriter, r *http.Request) {
+	var request ListChordsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListChords(ctx, request.(ListChordsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListChords")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListChordsResponseObject); ok {
+		if err := validResponse.VisitListChordsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

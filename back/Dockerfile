@@ -20,5 +20,6 @@ WORKDIR /app
 # Reuse bundle from builder so runtime TLS trust matches build (and optional corp CA); avoids apk fetch on MITM networks.
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /app/server .
+COPY --from=builder /app/data/chords.yaml ./data/chords.yaml
 EXPOSE 8081
 CMD ["./server"]

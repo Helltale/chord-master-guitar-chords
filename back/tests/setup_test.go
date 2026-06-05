@@ -36,9 +36,11 @@ func NewTestServer(t *testing.T) *httptest.Server {
 	artistRepo := repository.NewArtistRepository(db)
 	songRepo := repository.NewSongRepository(db)
 	songOpenRepo := repository.NewSongOpenRepository(db)
+	chordRepo := repository.NewChordRepository(db)
 	artistCases := cases.NewArtistCases(artistRepo)
 	songCases := cases.NewSongCases(artistRepo, songRepo, songOpenRepo, nil)
-	srv := handler.NewServer(artistCases, songCases)
+	chordCases := cases.NewChordCases(chordRepo)
+	srv := handler.NewServer(artistCases, songCases, chordCases)
 	si := gen.NewStrictHandler(srv, nil)
 	r := chi.NewRouter()
 	h := gen.HandlerWithOptions(si, gen.ChiServerOptions{

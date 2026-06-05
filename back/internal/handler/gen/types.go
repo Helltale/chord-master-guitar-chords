@@ -4,10 +4,8 @@
 package gen
 
 import (
-	"encoding/json"
 	"time"
 
-	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -23,90 +21,6 @@ func (e BlockKind) Valid() bool {
 	case Instrumental:
 		return true
 	case Lyrics:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for CommonChord.
-const (
-	A  CommonChord = "A"
-	A7 CommonChord = "A7"
-	Ab CommonChord = "Ab"
-	Am CommonChord = "Am"
-	B  CommonChord = "B"
-	Bb CommonChord = "Bb"
-	Bm CommonChord = "Bm"
-	C  CommonChord = "C"
-	C7 CommonChord = "C7"
-	CM CommonChord = "C#m"
-	D  CommonChord = "D"
-	D7 CommonChord = "D7"
-	Db CommonChord = "Db"
-	Dm CommonChord = "Dm"
-	E  CommonChord = "E"
-	E7 CommonChord = "E7"
-	Eb CommonChord = "Eb"
-	Em CommonChord = "Em"
-	F  CommonChord = "F"
-	F1 CommonChord = "F#"
-	FM CommonChord = "F#m"
-	G  CommonChord = "G"
-	G7 CommonChord = "G7"
-	Gm CommonChord = "Gm"
-)
-
-// Valid indicates whether the value is a known member of the CommonChord enum.
-func (e CommonChord) Valid() bool {
-	switch e {
-	case A:
-		return true
-	case A7:
-		return true
-	case Ab:
-		return true
-	case Am:
-		return true
-	case B:
-		return true
-	case Bb:
-		return true
-	case Bm:
-		return true
-	case C:
-		return true
-	case C7:
-		return true
-	case CM:
-		return true
-	case D:
-		return true
-	case D7:
-		return true
-	case Db:
-		return true
-	case Dm:
-		return true
-	case E:
-		return true
-	case E7:
-		return true
-	case Eb:
-		return true
-	case Em:
-		return true
-	case F:
-		return true
-	case F1:
-		return true
-	case FM:
-		return true
-	case G:
-		return true
-	case G7:
-		return true
-	case Gm:
 		return true
 	default:
 		return false
@@ -176,25 +90,39 @@ type Block struct {
 // BlockKind defines model for Block.Kind.
 type BlockKind string
 
+// ChordBarre defines model for ChordBarre.
+type ChordBarre struct {
+	Fret int `json:"fret"`
+
+	// From Low E string index (0) through high e (5)
+	From int `json:"from"`
+	To   int `json:"to"`
+}
+
+// ChordDefinition defines model for ChordDefinition.
+type ChordDefinition struct {
+	Barre    *ChordBarre `json:"barre,omitempty"`
+	IsPreset bool        `json:"is_preset"`
+	Name     string      `json:"name"`
+
+	// Shape 6-character ASCII tab shape (low E to high e)
+	Shape     string `json:"shape"`
+	SortOrder int    `json:"sort_order"`
+}
+
+// ChordList defines model for ChordList.
+type ChordList struct {
+	Chords []ChordDefinition `json:"chords"`
+}
+
 // ChordSegment defines model for ChordSegment.
 type ChordSegment struct {
-	// Chord Chord name; common values from CommonChord enum, or any string for custom chords
-	Chord ChordSegment_Chord `json:"chord"`
+	// Chord Chord name from catalog or custom
+	Chord string `json:"chord"`
 
 	// Text Lyrics fragment; empty string allowed (chord with no words)
 	Text *string `json:"text,omitempty"`
 }
-
-// ChordSegmentChord1 defines model for .
-type ChordSegmentChord1 = string
-
-// ChordSegment_Chord Chord name; common values from CommonChord enum, or any string for custom chords
-type ChordSegment_Chord struct {
-	union json.RawMessage
-}
-
-// CommonChord Common chord name for chord picker UI
-type CommonChord string
 
 // CreateArtistRequest defines model for CreateArtistRequest.
 type CreateArtistRequest struct {
@@ -314,65 +242,3 @@ type CreateSongJSONRequestBody = CreateSongRequest
 
 // UpdateSongJSONRequestBody defines body for UpdateSong for application/json ContentType.
 type UpdateSongJSONRequestBody = UpdateSongRequest
-
-// AsCommonChord returns the union data inside the ChordSegment_Chord as a CommonChord
-func (t ChordSegment_Chord) AsCommonChord() (CommonChord, error) {
-	var body CommonChord
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromCommonChord overwrites any union data inside the ChordSegment_Chord as the provided CommonChord
-func (t *ChordSegment_Chord) FromCommonChord(v CommonChord) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeCommonChord performs a merge with any union data inside the ChordSegment_Chord, using the provided CommonChord
-func (t *ChordSegment_Chord) MergeCommonChord(v CommonChord) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsChordSegmentChord1 returns the union data inside the ChordSegment_Chord as a ChordSegmentChord1
-func (t ChordSegment_Chord) AsChordSegmentChord1() (ChordSegmentChord1, error) {
-	var body ChordSegmentChord1
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromChordSegmentChord1 overwrites any union data inside the ChordSegment_Chord as the provided ChordSegmentChord1
-func (t *ChordSegment_Chord) FromChordSegmentChord1(v ChordSegmentChord1) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeChordSegmentChord1 performs a merge with any union data inside the ChordSegment_Chord, using the provided ChordSegmentChord1
-func (t *ChordSegment_Chord) MergeChordSegmentChord1(v ChordSegmentChord1) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-func (t ChordSegment_Chord) MarshalJSON() ([]byte, error) {
-	b, err := t.union.MarshalJSON()
-	return b, err
-}
-
-func (t *ChordSegment_Chord) UnmarshalJSON(b []byte) error {
-	err := t.union.UnmarshalJSON(b)
-	return err
-}
