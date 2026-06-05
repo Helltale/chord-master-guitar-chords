@@ -8,16 +8,16 @@ function renderWithI18n(ui: React.ReactElement) {
 }
 
 describe('ChordFingeringPanel', () => {
-  it('renders chord names and tab for each entry', () => {
+  it('renders chord names and diagrams for each entry', () => {
     const chordTabs: Record<string, string> = {
-      Am: 'e|-0-|\nB|-1-|',
-      C: 'e|-0-|\nB|-1-|\nG|-0-|',
+      Am: 'x02210',
+      C: 'x32010',
     }
-    renderWithI18n(<ChordFingeringPanel chordTabs={chordTabs} />)
+    const { container } = renderWithI18n(<ChordFingeringPanel chordTabs={chordTabs} />)
     expect(screen.getByText('Аппликатуры аккордов')).toBeInTheDocument()
     expect(screen.getByText('Am')).toBeInTheDocument()
     expect(screen.getByText('C')).toBeInTheDocument()
-    expect(screen.getAllByText(/e\|-0-\|/).length).toBe(2)
+    expect(container.querySelectorAll('svg').length).toBe(2)
   })
 
   it('renders nothing when chordTabs is empty', () => {

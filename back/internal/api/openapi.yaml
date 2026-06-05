@@ -122,6 +122,18 @@ paths:
         '400':
           description: Validation error
 
+  /chords:
+    get:
+      operationId: listChords
+      summary: List guitar chord catalog
+      responses:
+        '200':
+          description: Chord catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChordList'
+
   /search:
     get:
       operationId: search
@@ -410,42 +422,56 @@ components:
         - chord
       properties:
         chord:
-          oneOf:
-            - $ref: '#/components/schemas/CommonChord'
-            - type: string
-          description: "Chord name; common values from CommonChord enum, or any string for custom chords"
+          type: string
+          description: "Chord name from catalog or custom"
         text:
           type: string
           description: "Lyrics fragment; empty string allowed (chord with no words)"
 
-    CommonChord:
-      type: string
-      enum:
-        - Am
-        - C
-        - F
-        - G
-        - Dm
-        - Em
-        - Bm
-        - A
-        - D
-        - E
-        - B
-        - F#m
-        - C#m
-        - Bb
-        - Gm
-        - A7
-        - E7
-        - D7
-        - C7
-        - G7
-        - F#
-        - Ab
-        - Eb
-        - Db
-      description: "Common chord name for chord picker UI"
+    ChordBarre:
+      type: object
+      required:
+        - fret
+        - from
+        - to
+      properties:
+        fret:
+          type: integer
+        from:
+          type: integer
+          description: "Low E string index (0) through high e (5)"
+        to:
+          type: integer
+
+    ChordDefinition:
+      type: object
+      required:
+        - name
+        - shape
+        - is_preset
+        - sort_order
+      properties:
+        name:
+          type: string
+        shape:
+          type: string
+          description: "6-character ASCII tab shape (low E to high e)"
+        barre:
+          $ref: '#/components/schemas/ChordBarre'
+        is_preset:
+          type: boolean
+        sort_order:
+          type: integer
+
+    ChordList:
+      type: object
+      required:
+        - chords
+      properties:
+        chords:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChordDefinition'
 
     Block:
       type: object

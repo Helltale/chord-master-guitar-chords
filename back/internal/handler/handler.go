@@ -18,15 +18,17 @@ var _ gen.StrictServerInterface = (*server)(nil)
 type server struct {
 	artistCases *cases.ArtistCases
 	songCases   *cases.SongCases
+	chordCases  *cases.ChordCases
 }
 
 // NewServer returns the HTTP handler implementation (server is unexported by design).
 //
 //revive:disable-next-line:unexported-return
-func NewServer(artistCases *cases.ArtistCases, songCases *cases.SongCases) *server {
+func NewServer(artistCases *cases.ArtistCases, songCases *cases.SongCases, chordCases *cases.ChordCases) *server {
 	return &server{
 		artistCases: artistCases,
 		songCases:   songCases,
+		chordCases:  chordCases,
 	}
 }
 
@@ -207,7 +209,7 @@ func (srv *server) CreateSong(
 		Title:     s.Title,
 		Slug:      s.Slug,
 		Tonality:  ptr(s.Tonality),
-		Content:   tabContentToGen(&s.Content),
+		Content:   srv.tabContentToGen(ctx, &s.Content),
 		CreatedAt: timePtr(s.CreatedAt),
 		UpdatedAt: timePtr(s.UpdatedAt),
 	}, nil
@@ -231,7 +233,7 @@ func (srv *server) GetSong(ctx context.Context, request gen.GetSongRequestObject
 		Title:     s.Title,
 		Slug:      s.Slug,
 		Tonality:  ptr(s.Tonality),
-		Content:   tabContentToGen(&s.Content),
+		Content:   srv.tabContentToGen(ctx, &s.Content),
 		CreatedAt: timePtr(s.CreatedAt),
 		UpdatedAt: timePtr(s.UpdatedAt),
 	}, nil
@@ -269,7 +271,7 @@ func (srv *server) UpdateSong(
 		Title:     s.Title,
 		Slug:      s.Slug,
 		Tonality:  ptr(s.Tonality),
-		Content:   tabContentToGen(&s.Content),
+		Content:   srv.tabContentToGen(ctx, &s.Content),
 		CreatedAt: timePtr(s.CreatedAt),
 		UpdatedAt: timePtr(s.UpdatedAt),
 	}, nil
@@ -308,7 +310,7 @@ func (srv *server) TransposeSong(
 		Title:     s.Title,
 		Slug:      s.Slug,
 		Tonality:  ptr(s.Tonality),
-		Content:   tabContentToGen(&s.Content),
+		Content:   srv.tabContentToGen(ctx, &s.Content),
 		CreatedAt: timePtr(s.CreatedAt),
 		UpdatedAt: timePtr(s.UpdatedAt),
 	}, nil
@@ -344,7 +346,39 @@ func (srv *server) songToListItem(s *entity.Song) gen.SongListItem {
 	return item
 }
 
-func tabContentToGen(c *entity.TabContent) *gen.TabContent {
+func (srv *server) ListChords(
+	ctx context.Context,
+	_ gen.ListChordsRequestObject,
+) (gen.ListChordsResponseObject, error) {
+	list, err := srv.chordCases.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	chords := make([]gen.ChordDefinition, 0, len(list))
+	for _, ch := range list {
+		chords = append(chords, chordToAPI(ch))
+	}
+	return gen.ListChords200JSONResponse{Chords: chords}, nil
+}
+
+func chordToAPI(ch *entity.Chord) gen.ChordDefinition {
+	out := gen.ChordDefinition{
+		Name:      ch.Name,
+		Shape:     ch.Shape,
+		IsPreset:  ch.IsPreset,
+		SortOrder: ch.SortOrder,
+	}
+	if ch.BarreFret != nil && ch.BarreFrom != nil && ch.BarreTo != nil {
+		out.Barre = &gen.ChordBarre{
+			Fret: *ch.BarreFret,
+			From: *ch.BarreFrom,
+			To:   *ch.BarreTo,
+		}
+	}
+	return out
+}
+
+func (srv *server) tabContentToGen(ctx context.Context, c *entity.TabContent) *gen.TabContent {
 	if c == nil {
 		return nil
 	}
@@ -356,7 +390,10 @@ func tabContentToGen(c *entity.TabContent) *gen.TabContent {
 		}
 		sections = &list
 	}
-	usedTabs := cases.UsedChordTabs(*c)
+	usedTabs, err := srv.chordCases.UsedChordTabs(ctx, *c)
+	if err != nil {
+		usedTabs = map[string]string{}
+	}
 	var chordTabs *map[string]string
 	if len(usedTabs) > 0 {
 		chordTabs = &usedTabs
@@ -407,9 +444,7 @@ func blockToGen(b entity.Block) gen.Block {
 }
 
 func chordSegmentToGen(s entity.ChordSegment) gen.ChordSegment {
-	var chordUnion gen.ChordSegment_Chord
-	_ = chordUnion.FromChordSegmentChord1(s.Chord)
-	out := gen.ChordSegment{Chord: chordUnion}
+	out := gen.ChordSegment{Chord: s.Chord}
 	out.Text = ptr(s.Text)
 	return out
 }
@@ -476,20 +511,9 @@ func blockFromAPI(b gen.Block) entity.Block {
 }
 
 func chordSegmentFromAPI(s gen.ChordSegment) entity.ChordSegment {
-	chordStr := chordSegmentChordToString(s.Chord)
-	out := entity.ChordSegment{Chord: chordStr}
+	out := entity.ChordSegment{Chord: s.Chord}
 	if s.Text != nil {
 		out.Text = *s.Text
 	}
 	return out
-}
-
-func chordSegmentChordToString(c gen.ChordSegment_Chord) string {
-	if v, err := c.AsCommonChord(); err == nil {
-		return string(v)
-	}
-	if v, err := c.AsChordSegmentChord1(); err == nil {
-		return v
-	}
-	return ""
 }

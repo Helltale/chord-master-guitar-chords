@@ -7,6 +7,7 @@ import type {
   Artist,
   ArtistList,
   ArtistWithSongs,
+  ChordList,
   CreateArtistRequest,
   CreateSongRequest,
   Song,
@@ -69,6 +70,12 @@ export function createArtist(body: CreateArtistRequest): Promise<Artist> {
 
 export function getArtistBySlug(artistSlug: string): Promise<ArtistWithSongs> {
   return request<ArtistWithSongs>(`/artists/${encodeURIComponent(artistSlug)}`)
+}
+
+// --- Chords ---
+
+export function listChords(): Promise<ChordList> {
+  return request<ChordList>('/chords')
 }
 
 // --- Songs ---

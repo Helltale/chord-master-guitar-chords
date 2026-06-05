@@ -27,35 +27,6 @@ func ChordNamesFlat() []string {
 // - G#m баррэ: "466444".
 type ChordTabShape string
 
-// DefaultChordTabs содержит предопределённые аппликатуры для типичных аккордов.
-// Это по сути константная таблица, поэтому допустимо хранить её в глобальной
-// переменной для быстрого доступа и переиспользования.
-//
-//nolint:gochecknoglobals // таблица-константа с дефолтными аппликатурами
-var DefaultChordTabs = map[string]ChordTabShape{
-	// Открытые аккорды
-	"C":  "x32010",
-	"D":  "xx0232",
-	"E":  "022100",
-	"F":  "133211",
-	"G":  "320003",
-	"A":  "x02220",
-	"Am": "x02210",
-	"Em": "022000",
-	"Dm": "xx0231",
-
-	// Баррэ и более сложные варианты (пример из скриншота)
-	"G#m": "466444",
-	"C#m": "x46654",
-	"H":   "x24442",
-	"Bm":  "x24432",
-}
-
-func LookupChordTab(name string) (ChordTabShape, bool) {
-	shape, ok := DefaultChordTabs[name]
-	return shape, ok
-}
-
 func TransposeChord(chord string, semitones int) string {
 	if chord == "" || semitones == 0 {
 		return chord

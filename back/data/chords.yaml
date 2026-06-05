@@ -1,0 +1,94 @@
+chords:
+  - name: G
+    shape: "320003"
+    preset: true
+    sort_order: 10
+  - name: C
+    shape: x32010
+    preset: true
+    sort_order: 20
+  - name: D
+    shape: xx0232
+    preset: true
+    sort_order: 30
+  - name: Em
+    shape: "022000"
+    preset: true
+    sort_order: 40
+  - name: Am
+    shape: x02210
+    preset: true
+    sort_order: 50
+  - name: F
+    shape: "133211"
+    preset: true
+    barre: { fret: 1, from: 0, to: 5 }
+    sort_order: 60
+  - name: Bm
+    shape: x24432
+    preset: true
+    barre: { fret: 2, from: 1, to: 5 }
+    sort_order: 70
+  - name: E
+    shape: "022100"
+    sort_order: 80
+  - name: A
+    shape: x02220
+    sort_order: 90
+  - name: Dm
+    shape: xx0231
+    sort_order: 100
+  - name: B
+    shape: x24442
+    sort_order: 110
+  - name: H
+    shape: x24442
+    sort_order: 115
+  - name: F#m
+    shape: "244222"
+    sort_order: 120
+  - name: C#m
+    shape: x46654
+    sort_order: 130
+  - name: G#m
+    shape: "466444"
+    sort_order: 140
+  - name: Gm
+    shape: "355333"
+    barre: { fret: 3, from: 0, to: 5 }
+    sort_order: 150
+  - name: Bb
+    shape: x13331
+    barre: { fret: 1, from: 0, to: 4 }
+    sort_order: 160
+  - name: F#
+    shape: "244322"
+    barre: { fret: 2, from: 0, to: 5 }
+    sort_order: 170
+  - name: Ab
+    shape: "466544"
+    barre: { fret: 4, from: 0, to: 5 }
+    sort_order: 180
+  - name: Eb
+    shape: x68886
+    barre: { fret: 6, from: 0, to: 5 }
+    sort_order: 190
+  - name: Db
+    shape: x46664
+    barre: { fret: 4, from: 0, to: 5 }
+    sort_order: 200
+  - name: A7
+    shape: x02020
+    sort_order: 210
+  - name: E7
+    shape: "020100"
+    sort_order: 220
+  - name: D7
+    shape: xx0212
+    sort_order: 230
+  - name: C7
+    shape: x32310
+    sort_order: 240
+  - name: G7
+    shape: "320001"
+    sort_order: 250

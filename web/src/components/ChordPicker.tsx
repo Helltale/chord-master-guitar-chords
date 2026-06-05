@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
-import { COMMON_CHORDS } from '@/api/schemas'
 import { useTranslation } from '@/contexts/I18nContext'
+import { useChords } from '@/hooks/useChords'
 
 interface ChordPickerProps {
   isOpen: boolean
@@ -11,6 +11,7 @@ interface ChordPickerProps {
 
 export function ChordPicker({ isOpen, onClose, value, onSelect }: ChordPickerProps) {
   const { t } = useTranslation()
+  const { chords } = useChords()
   const customInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -41,20 +42,20 @@ export function ChordPicker({ isOpen, onClose, value, onSelect }: ChordPickerPro
       aria-label={t('chordPicker.label')}
     >
       <div className="mb-2 grid grid-cols-4 gap-1">
-        {COMMON_CHORDS.map((chord) => (
+        {chords.map((chord) => (
           <button
-            key={chord}
+            key={chord.name}
             type="button"
             role="option"
             className={`rounded px-2 py-1 text-sm font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/50 ${
-              value === chord ? 'bg-indigo-100 dark:bg-indigo-900/70 text-indigo-800 dark:text-indigo-200' : 'text-gray-700 dark:text-gray-300'
+              value === chord.name ? 'bg-indigo-100 dark:bg-indigo-900/70 text-indigo-800 dark:text-indigo-200' : 'text-gray-700 dark:text-gray-300'
             }`}
             onClick={() => {
-              onSelect(chord)
+              onSelect(chord.name)
               onClose()
             }}
           >
-            {chord}
+            {chord.name}
           </button>
         ))}
       </div>
