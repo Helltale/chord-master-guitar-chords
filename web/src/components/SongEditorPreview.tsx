@@ -1,6 +1,8 @@
 import type { TabContent } from '@/api/schemas'
 import { SongContent } from '@/components/SongContent'
 import { useTranslation } from '@/contexts/I18nContext'
+import { useChords } from '@/hooks/useChords'
+import { resolveChordTabs } from '@/utils/resolveChordTabs'
 
 export type SongEditorPreviewState = {
   title: string
@@ -15,6 +17,9 @@ interface SongEditorPreviewProps {
 
 export function SongEditorPreview({ preview }: SongEditorPreviewProps) {
   const { t } = useTranslation()
+  const { chords } = useChords()
+  const chordTabs =
+    preview?.content != null ? resolveChordTabs(preview.content, chords) : {}
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
@@ -46,7 +51,11 @@ export function SongEditorPreview({ preview }: SongEditorPreviewProps) {
               )}
             </div>
             <div className="custom-scrollbar flex-1 overflow-y-auto pt-4 pr-1 leading-relaxed">
-              <SongContent content={preview.content} />
+              <SongContent
+                content={preview.content}
+                chordTabs={chordTabs}
+                catalog={chords}
+              />
             </div>
           </>
         ) : (

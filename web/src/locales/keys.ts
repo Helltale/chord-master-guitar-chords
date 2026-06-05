@@ -120,6 +120,12 @@ export type LocaleKey =
   | 'chordPicker.label'
   | 'chordPicker.otherLabel'
   | 'chordPicker.otherPlaceholder'
+  | 'chordCatalog.open'
+  | 'chordCatalog.title'
+  | 'chordCatalog.searchPlaceholder'
+  | 'chordCatalog.empty'
+  | 'chordCatalog.results'
+  | 'chordCatalog.close'
   // Lyrics block editor
   | 'lyricsBlock.removeSegment'
   | 'lyricsBlock.addSegment'

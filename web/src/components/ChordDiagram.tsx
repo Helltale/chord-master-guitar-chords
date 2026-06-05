@@ -23,10 +23,18 @@ interface ChordDiagramProps {
   shape: string
   barre?: ChordBarre
   compact?: boolean
+  decorative?: boolean
   className?: string
 }
 
-export function ChordDiagram({ chord, shape, barre, compact, className }: ChordDiagramProps) {
+export function ChordDiagram({
+  chord,
+  shape,
+  barre,
+  compact,
+  decorative,
+  className,
+}: ChordDiagramProps) {
   const frets = parseChordShape(shape)
   if (!frets) {
     return (
@@ -63,8 +71,9 @@ export function ChordDiagram({ chord, shape, barre, compact, className }: ChordD
         <svg
           className="h-full w-full"
           viewBox={`0 0 ${W} ${H}`}
-          role="img"
-          aria-label={`${chord} chord fingering`}
+          role={decorative ? 'presentation' : 'img'}
+          aria-hidden={decorative ? true : undefined}
+          aria-label={decorative ? undefined : `${chord} chord fingering`}
         >
           <rect x="0" y="0" width={W} height={H} rx="8" fill="transparent" />
 

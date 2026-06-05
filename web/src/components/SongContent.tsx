@@ -1,23 +1,33 @@
-import type { TabContent as TabContentType } from '@/api/schemas'
+import type { ChordDefinition, TabContent as TabContentType } from '@/api/schemas'
+import { ChordHintBadge } from '@/components/ChordHintBadge'
 import {
   getHangingLeadChord,
   segmentChordForDisplay,
   segmentTextForDisplay,
 } from '@/utils/lyricsLineLayout'
+import { catalogByName } from '@/utils/resolveChordTabs'
 
 interface SongContentProps {
   content: TabContentType
+  chordTabs?: Record<string, string>
+  catalog?: ChordDefinition[]
 }
 
-function ChordBadge({ chord }: { chord: string }) {
-  return (
-    <span className="rounded-md bg-indigo-500/15 px-1.5 py-0 text-[0.65rem] text-emerald-700 shadow-sm shadow-indigo-900/10 dark:bg-indigo-500/20 dark:text-emerald-300 dark:shadow-indigo-900/30">
-      {chord}
-    </span>
-  )
+function ChordBadge({
+  chord,
+  chordTabs,
+  catalog,
+}: {
+  chord: string
+  chordTabs?: Record<string, string>
+  catalog?: ChordDefinition[]
+}) {
+  const shape = chordTabs?.[chord]
+  const barre = catalog ? catalogByName(catalog).get(chord)?.barre : undefined
+  return <ChordHintBadge chord={chord} shape={shape} barre={barre} />
 }
 
-export function SongContent({ content }: SongContentProps) {
+export function SongContent({ content, chordTabs, catalog }: SongContentProps) {
   const sections = content.sections ?? []
   return (
     <article className="max-w-none pl-10 text-gray-800 dark:text-gray-200">
@@ -38,10 +48,10 @@ export function SongContent({ content }: SongContentProps) {
                   <div className="relative font-sans leading-snug text-slate-800 dark:text-gray-100">
                     {hanging && (
                       <span
-                        className="absolute top-0 flex h-[1rem] items-start justify-end pr-0.5 text-xs font-mono font-semibold leading-none"
+                        className="absolute top-0 flex min-h-[1.25rem] items-start justify-end pr-0.5 text-base font-mono font-semibold leading-snug"
                         style={{ right: '100%', width: `${hanging.leadingSpaces}ch` }}
                       >
-                        <ChordBadge chord={hanging.chord} />
+                        <ChordBadge chord={hanging.chord} chordTabs={chordTabs} catalog={catalog} />
                       </span>
                     )}
                     {segments.map((seg, sidx) => {
@@ -53,8 +63,10 @@ export function SongContent({ content }: SongContentProps) {
                           className="inline-block min-w-[0.25rem] align-top"
                         >
                           {lineHasChords && (
-                            <span className="block h-[1rem] whitespace-nowrap text-xs font-mono font-semibold leading-none text-emerald-700 dark:text-emerald-300">
-                              {chord ? <ChordBadge chord={chord} /> : null}
+                            <span className="block min-h-[1.25rem] whitespace-nowrap text-base font-mono font-semibold leading-snug text-emerald-700 dark:text-emerald-300">
+                              {chord ? (
+                                <ChordBadge chord={chord} chordTabs={chordTabs} catalog={catalog} />
+                              ) : null}
                             </span>
                           )}
                           <span className="whitespace-pre-wrap break-words text-base text-slate-800 dark:text-slate-100">

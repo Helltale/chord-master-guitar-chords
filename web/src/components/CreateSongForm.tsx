@@ -4,6 +4,7 @@ import type { Artist } from '@/api/schemas'
 import { useTranslation } from '@/contexts/I18nContext'
 import { formatTabContentAsLyrics } from '@/utils/formatTabContentAsLyrics'
 import { parseLyricsWithChords } from '@/utils/parseLyricsWithChords'
+import { ChordCatalogModal } from '@/components/ChordCatalogModal'
 import { useChords } from '@/hooks/useChords'
 import { slugFromString } from '@/utils/slug'
 
@@ -57,13 +58,13 @@ export function CreateSongForm({
   const [tonalityRaw, setTonalityRaw] = useState(
     initial?.tonality != null ? String(initial.tonality) : ''
   )
+  const [catalogOpen, setCatalogOpen] = useState(false)
   const lyricsTextareaRef = useRef<HTMLTextAreaElement>(null)
   const chordButtonsRef = useRef<HTMLDivElement>(null)
   const pendingCursorRef = useRef<number | null>(null)
   const selectionRef = useRef({ start: 0, end: 0 })
-  const insertChordRef = useRef<(chord: string) => void>(() => {})
 
-  const insertChordAtCursor = (chord: string) => {
+  const insertChordAtCursor = useCallback((chord: string) => {
     const insertion = `[${chord}]`
     const { start, end } = selectionRef.current
 
@@ -74,9 +75,12 @@ export function CreateSongForm({
       selectionRef.current = { start: cursor, end: cursor }
       return newValue
     })
-  }
+  }, [])
 
-  insertChordRef.current = insertChordAtCursor
+  const handleCatalogSelect = useCallback((chord: string) => {
+    insertChordAtCursor(chord)
+    requestAnimationFrame(() => lyricsTextareaRef.current?.focus())
+  }, [insertChordAtCursor])
 
   const saveTextareaSelection = useCallback(() => {
     const textarea = lyricsTextareaRef.current
@@ -117,12 +121,12 @@ export function CreateSongForm({
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-chord]')
       if (!button?.dataset.chord) return
       e.preventDefault()
-      insertChordRef.current(button.dataset.chord)
+      insertChordAtCursor(button.dataset.chord)
     }
 
     chordMouseDownRef.current = handleMouseDown
     node.addEventListener('mousedown', handleMouseDown)
-  }, [])
+  }, [insertChordAtCursor])
 
   useLayoutEffect(() => {
     if (pendingCursorRef.current === null) return
@@ -318,21 +322,36 @@ export function CreateSongForm({
               )}
             </span>
           </div>
-          <div ref={bindChordButtonsRef} className="flex flex-wrap gap-2">
-            {chordPresets.map((chord) => (
-              <button
-                key={chord.name}
-                type="button"
-                data-chord={chord.name}
-                tabIndex={-1}
-                className="flex h-8 min-w-[2.5rem] items-center justify-center rounded-full border border-indigo-500/40 bg-indigo-500/10 px-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-500 hover:text-white dark:text-indigo-200"
-              >
-                {chord.name}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <div ref={bindChordButtonsRef} className="flex flex-wrap gap-2">
+              {chordPresets.map((chord) => (
+                <button
+                  key={chord.name}
+                  type="button"
+                  data-chord={chord.name}
+                  tabIndex={-1}
+                  className="flex h-8 min-w-[2.5rem] items-center justify-center rounded-full border border-indigo-500/40 bg-indigo-500/10 px-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-500 hover:text-white dark:text-indigo-200"
+                >
+                  {chord.name}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setCatalogOpen(true)}
+              className="flex h-8 items-center justify-center rounded-full border border-slate-400/50 bg-slate-500/10 px-3 text-xs font-semibold text-slate-600 hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-700 dark:text-slate-300 dark:hover:text-indigo-200"
+            >
+              {t('chordCatalog.open')}
+            </button>
           </div>
         </div>
       </div>
+      <ChordCatalogModal
+        open={catalogOpen}
+        onClose={() => setCatalogOpen(false)}
+        onSelect={handleCatalogSelect}
+      />
       <button
         type="submit"
         disabled={loading || artistsLoading}

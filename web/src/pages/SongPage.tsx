@@ -127,7 +127,7 @@ export function SongPage() {
         <main className="custom-scrollbar flex-1 overflow-y-auto rounded-xl border border-gray-200/70 bg-white/90 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/90 md:p-8">
           <div className="mx-auto max-w-3xl">
             {content?.sections && content.sections.length > 0 ? (
-              <SongContent content={content} />
+              <SongContent content={content} chordTabs={chordTabs} catalog={chords} />
             ) : (
               <p className="text-gray-500 dark:text-gray-400">{t('common.noContent')}</p>
             )}

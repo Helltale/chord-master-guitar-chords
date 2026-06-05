@@ -137,6 +137,13 @@ export const ru: LocaleDict = {
   'chordPicker.otherLabel': 'Другой аккорд',
   'chordPicker.otherPlaceholder': 'Другой...',
 
+  'chordCatalog.open': 'Все аккорды…',
+  'chordCatalog.title': 'Каталог аккордов',
+  'chordCatalog.searchPlaceholder': 'Поиск: Am, Bb, A7…',
+  'chordCatalog.empty': 'Ничего не найдено',
+  'chordCatalog.results': 'Найдено: {count}',
+  'chordCatalog.close': 'Закрыть',
+
   'lyricsBlock.removeSegment': 'Удалить сегмент',
   'lyricsBlock.addSegment': '+ Сегмент',
 

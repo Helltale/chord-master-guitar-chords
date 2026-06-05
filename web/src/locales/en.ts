@@ -135,6 +135,13 @@ export const en: LocaleDict = {
   'chordPicker.otherLabel': 'Other chord',
   'chordPicker.otherPlaceholder': 'Other...',
 
+  'chordCatalog.open': 'All chords…',
+  'chordCatalog.title': 'Chord catalog',
+  'chordCatalog.searchPlaceholder': 'Search: Am, Bb, A7…',
+  'chordCatalog.empty': 'No chords found',
+  'chordCatalog.results': 'Found: {count}',
+  'chordCatalog.close': 'Close',
+
   'lyricsBlock.removeSegment': 'Remove segment',
   'lyricsBlock.addSegment': '+ Segment',
 
