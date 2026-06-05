@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CreateSongRequest, TabContent, UpdateSongRequest } from '@/api/schemas'
 import type { Artist } from '@/api/schemas'
 import { useTranslation } from '@/contexts/I18nContext'
@@ -57,6 +57,82 @@ export function CreateSongForm({
   const [tonalityRaw, setTonalityRaw] = useState(
     initial?.tonality != null ? String(initial.tonality) : ''
   )
+  const lyricsTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const chordButtonsRef = useRef<HTMLDivElement>(null)
+  const pendingCursorRef = useRef<number | null>(null)
+  const selectionRef = useRef({ start: 0, end: 0 })
+  const insertChordRef = useRef<(chord: string) => void>(() => {})
+
+  const insertChordAtCursor = (chord: string) => {
+    const insertion = `[${chord}]`
+    const { start, end } = selectionRef.current
+
+    setLyricsText((prev) => {
+      const newValue = prev.slice(0, start) + insertion + prev.slice(end)
+      const cursor = start + insertion.length
+      pendingCursorRef.current = cursor
+      selectionRef.current = { start: cursor, end: cursor }
+      return newValue
+    })
+  }
+
+  insertChordRef.current = insertChordAtCursor
+
+  const saveTextareaSelection = useCallback(() => {
+    const textarea = lyricsTextareaRef.current
+    if (!textarea) return
+    selectionRef.current = {
+      start: textarea.selectionStart,
+      end: textarea.selectionEnd,
+    }
+  }, [])
+
+  const bindTextareaRef = useCallback((node: HTMLTextAreaElement | null) => {
+    const prev = lyricsTextareaRef.current
+    if (prev) {
+      prev.removeEventListener('mouseup', saveTextareaSelection)
+      prev.removeEventListener('keyup', saveTextareaSelection)
+      prev.removeEventListener('select', saveTextareaSelection)
+    }
+
+    lyricsTextareaRef.current = node
+
+    if (!node) return
+    node.addEventListener('mouseup', saveTextareaSelection)
+    node.addEventListener('keyup', saveTextareaSelection)
+    node.addEventListener('select', saveTextareaSelection)
+  }, [saveTextareaSelection])
+
+  const chordMouseDownRef = useRef<((e: MouseEvent) => void) | null>(null)
+
+  const bindChordButtonsRef = useCallback((node: HTMLDivElement | null) => {
+    if (chordButtonsRef.current && chordMouseDownRef.current) {
+      chordButtonsRef.current.removeEventListener('mousedown', chordMouseDownRef.current)
+    }
+
+    chordButtonsRef.current = node
+    if (!node) return
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const button = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-chord]')
+      if (!button?.dataset.chord) return
+      e.preventDefault()
+      insertChordRef.current(button.dataset.chord)
+    }
+
+    chordMouseDownRef.current = handleMouseDown
+    node.addEventListener('mousedown', handleMouseDown)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (pendingCursorRef.current === null) return
+    const textarea = lyricsTextareaRef.current
+    if (!textarea) return
+    const pos = pendingCursorRef.current
+    pendingCursorRef.current = null
+    textarea.focus()
+    textarea.setSelectionRange(pos, pos)
+  }, [lyricsText])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -218,9 +294,17 @@ export function CreateSongForm({
           {t('createSong.lyricsOptional')}
         </label>
         <textarea
+          ref={bindTextareaRef}
           aria-labelledby="song-content-label"
           value={lyricsText}
-          onChange={(e) => setLyricsText(e.target.value)}
+          onChange={(e) => {
+            setLyricsText(e.target.value)
+            selectionRef.current = {
+              start: e.target.selectionStart,
+              end: e.target.selectionEnd,
+            }
+          }}
+          onSelect={saveTextareaSelection}
           rows={8}
           className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-900 shadow-inner shadow-slate-900/5 outline-none ring-1 ring-slate-200 focus:border-indigo-400 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100 dark:shadow-black/40 dark:ring-slate-900/80"
           placeholder="[Am] Thoughts fly away, [Dm] stretch [F] beyond the horizon..."
@@ -234,12 +318,13 @@ export function CreateSongForm({
               )}
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div ref={bindChordButtonsRef} className="flex flex-wrap gap-2">
             {CHORD_PRESETS.map((chord) => (
               <button
                 key={chord}
                 type="button"
-                onClick={() => setLyricsText((prev) => `${prev}${prev ? ' ' : ''}[${chord}] `)}
+                data-chord={chord}
+                tabIndex={-1}
                 className="flex h-8 min-w-[2.5rem] items-center justify-center rounded-full border border-indigo-500/40 bg-indigo-500/10 px-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-500 hover:text-white dark:text-indigo-200"
               >
                 {chord}
