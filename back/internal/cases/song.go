@@ -121,6 +121,13 @@ func (c *SongCases) Create(
 	return s, nil
 }
 
+func (c *SongCases) Delete(ctx context.Context, id uuid.UUID) error {
+	if _, err := c.songRepo.GetByID(ctx, id); err != nil {
+		return err
+	}
+	return c.songRepo.Delete(ctx, id)
+}
+
 func (c *SongCases) Update(
 	ctx context.Context,
 	id uuid.UUID,

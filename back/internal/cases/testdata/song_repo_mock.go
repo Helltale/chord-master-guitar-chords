@@ -56,6 +56,20 @@ func (mr *MockSongRepositoryMockRecorder) Create(ctx, s any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockSongRepository)(nil).Create), ctx, s)
 }
 
+// Delete mocks base method.
+func (m *MockSongRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockSongRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSongRepository)(nil).Delete), ctx, id)
+}
+
 // GetByArtistIDAndSlug mocks base method.
 func (m *MockSongRepository) GetByArtistIDAndSlug(ctx context.Context, artistID uuid.UUID, slug string) (*entity.Song, error) {
 	m.ctrl.T.Helper()

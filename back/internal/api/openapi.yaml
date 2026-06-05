@@ -197,6 +197,21 @@ paths:
           description: Validation error
         '404':
           description: Not found
+    delete:
+      operationId: deleteSong
+      summary: Delete song
+      parameters:
+        - name: songId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
 
   /songs/{songId}/transpose:
     post:

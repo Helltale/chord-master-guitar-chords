@@ -1,19 +1,43 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useListSongs, useListArtists } from '@/hooks'
+import { Link, useNavigate } from 'react-router-dom'
+import { useDeleteSong, useListSongs, useListArtists } from '@/hooks'
 import { useTranslation } from '@/contexts/I18nContext'
+import { useFollows } from '@/contexts/follows'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { RowActionsMenu } from '@/components/RowActionsMenu'
+import type { SongListItem } from '@/api/schemas'
 
 export function SongsPage() {
+  const navigate = useNavigate()
   const { t } = useTranslation()
-  const { items, total, loading, error } = useListSongs({ limit: 500 })
+  const { items, total, loading, error, refetch } = useListSongs({ limit: 500 })
   const { items: artists } = useListArtists({ limit: 500 })
+  const { remove, loading: deleteLoading, error: deleteError } = useDeleteSong()
+  const { isSongFollowed, toggleSongFollow } = useFollows()
   const [query, setQuery] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<SongListItem | null>(null)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return items
     return items.filter((s) => s.title.toLowerCase().includes(q) || s.slug.toLowerCase().includes(q))
   }, [items, query])
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    const ok = await remove(deleteTarget.song_id)
+    if (!ok) return
+    if (isSongFollowed(deleteTarget.song_id)) {
+      toggleSongFollow({
+        song_id: deleteTarget.song_id,
+        title: deleteTarget.title,
+        slug: deleteTarget.slug,
+        tonality: deleteTarget.tonality,
+      })
+    }
+    setDeleteTarget(null)
+    refetch()
+  }
 
   if (loading && items.length === 0) {
     return (
@@ -34,6 +58,7 @@ export function SongsPage() {
   }
 
   return (
+    <>
     <div className="relative flex min-h-0 flex-1 flex-col -mx-4 -my-6 overflow-hidden bg-slate-100 px-4 py-8 transition-colors duration-300 dark:bg-slate-950">
       <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col gap-8">
         {/* Header */}
@@ -85,6 +110,9 @@ export function SongsPage() {
                   <th className="px-5 py-3">{t('songs.tableArtist')}</th>
                   <th className="px-5 py-3">{t('songs.tableSlug')}</th>
                   <th className="px-5 py-3 text-right">{t('song.tonality')}</th>
+                  <th className="w-12 px-3 py-3">
+                    <span className="sr-only">{t('songs.rowActions')}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/90 dark:divide-slate-800/80">
@@ -117,6 +145,24 @@ export function SongsPage() {
                           </span>
                         )}
                       </td>
+                      <td className="px-3 py-3 text-right">
+                        <RowActionsMenu
+                          ariaLabel={t('songs.rowActions')}
+                          items={[
+                            {
+                              id: 'edit',
+                              label: t('songs.edit'),
+                              onSelect: () => navigate(`/songs/${song.song_id}/edit`),
+                            },
+                            {
+                              id: 'delete',
+                              label: t('songs.delete'),
+                              variant: 'danger',
+                              onSelect: () => setDeleteTarget(song),
+                            },
+                          ]}
+                        />
+                      </td>
                     </tr>
                   )
                 })}
@@ -133,6 +179,27 @@ export function SongsPage() {
         </section>
       </div>
     </div>
+    <ConfirmDialog
+      open={deleteTarget != null}
+      title={t('songs.deleteConfirmTitle')}
+      message={
+        deleteTarget
+          ? t('songs.deleteConfirmMessage').replace('{title}', deleteTarget.title)
+          : undefined
+      }
+      confirmLabel={t('songs.deleteConfirm')}
+      cancelLabel={t('songs.deleteCancel')}
+      loading={deleteLoading}
+      destructive
+      onCancel={() => setDeleteTarget(null)}
+      onConfirm={handleDeleteConfirm}
+    />
+    {deleteError && (
+      <p className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-800 shadow-lg dark:text-red-200" role="alert">
+        {deleteError.message}
+      </p>
+    )}
+    </>
   )
 }
 

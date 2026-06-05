@@ -100,6 +100,10 @@ export function updateSong(songId: string, body: UpdateSongRequest): Promise<Son
   return request<Song>(`/songs/${encodeURIComponent(songId)}`, { method: 'PUT', body })
 }
 
+export function deleteSong(songId: string): Promise<void> {
+  return request<void>(`/songs/${encodeURIComponent(songId)}`, { method: 'DELETE' })
+}
+
 export function transposeSong(songId: string, semitones: number): Promise<Song> {
   return request<Song>(
     `/songs/${encodeURIComponent(songId)}/transpose?semitones=${encodeURIComponent(semitones)}`,

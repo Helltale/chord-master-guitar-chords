@@ -8,6 +8,7 @@ import { ArtistPage } from '@/pages/ArtistPage'
 import { SongPage } from '@/pages/SongPage'
 import { CreateArtistPage } from '@/pages/CreateArtistPage'
 import { CreateSongPage } from '@/pages/CreateSongPage'
+import { EditSongPage } from '@/pages/EditSongPage'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/song/:songId" element={<SongPage />} />
         <Route path="/artists/new" element={<CreateArtistPage />} />
         <Route path="/songs/new" element={<CreateSongPage />} />
+        <Route path="/songs/:songId/edit" element={<EditSongPage />} />
       </Route>
     </Routes>
   )
