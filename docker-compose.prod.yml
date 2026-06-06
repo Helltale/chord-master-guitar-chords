@@ -54,7 +54,7 @@ services:
       - back
 
   grafana:
-    image: quay.io/grafana/grafana:12.4.4
+    image: ${GRAFANA_IMAGE:-dockerhub1.beget.com/grafana/grafana:12.4.4}
     container_name: amdm-grafana
     ports:
       - "3000:3000"
