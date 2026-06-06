@@ -45,3 +45,7 @@ deploy-pull:
 	docker compose -f docker-compose.prod.yml pull
 	docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
+deploy-minimal:
+	docker compose -f docker-compose.prod.yml pull postgres back web
+	docker compose -f docker-compose.prod.yml up -d postgres back web
+
