@@ -54,7 +54,7 @@ services:
       - back
 
   grafana:
-    image: grafana/grafana:latest
+    image: quay.io/grafana/grafana:12.4.4
     container_name: amdm-grafana
     ports:
       - "3000:3000"
