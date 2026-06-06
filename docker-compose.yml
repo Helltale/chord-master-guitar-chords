@@ -45,7 +45,7 @@ services:
       - back
 
   prometheus:
-    image: prom/prometheus:latest
+    image: quay.io/prometheus/prometheus:v3.5.3
     container_name: amdm-prometheus
     ports:
       - "9090:9090"
